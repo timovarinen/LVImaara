@@ -8,14 +8,18 @@ def read_file():
     
     returns openned IFC-file if successful.
     """
-    filePath = input("Enter path to IFC-file (or drag-and-drop): ")
+    while True:
+        filePath = input("Enter path to IFC-file (or drag-and-drop) (c to cancel): ")
 
-    try:
-        model = ifcopenshell.open(filePath)
-        return model
-    except IOError:
-        print("Could not open ", filePath)
-        return 0
+        if filePath == "c":
+            return None
+
+        try:
+            model = ifcopenshell.open(filePath)
+            return model
+        except IOError:
+            print("Could not open ", filePath)
+            continue
 
 def pipe_meters(model):
     """
@@ -47,3 +51,24 @@ def pipe_meters(model):
             qty.update({name : {DN : length}})
 
     return qty
+
+def ui():
+    """
+    Simple ui for testing of functions during development.
+    """
+    print("LVI-määrälaskenta IFC-mallista, dev.")
+    model = read_file()
+    if model == None:
+        print("Mallia ei ole avattu, lopetetaan sovellus.")
+        return
+    
+    pipeQty = pipe_meters(model)
+
+    for type in pipeQty:
+        print(type)
+        for DN in pipeQty[type]:
+            print("- DN" , DN, "{:.2f}".format(pipeQty[type][DN]), "m.")
+
+    
+
+ui()
