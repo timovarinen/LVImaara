@@ -83,6 +83,43 @@ def duct_meters(model):
 
     return qty
 
+def numOfDuctParts(model):
+    """
+    Read and count number of different duct parts
+    
+    Parameters:
+        model: model to be read
+        
+    Returns:
+        dict: quantity of parts as {type (bends with angle) : {size : qty}}
+    """
+    parts = {}
+    fittings = model.by_type("IfcDuctFitting")
+    for item in model.by_type("IfcAirTerminal"):
+        fittings.append(item)
+    for item in model.by_type("IfcDuctSilencer"):
+        fittings.append(item)
+    for item in model.by_type("IfcFan"):
+        fittings.append(item)
+    for item in model.by_type("IfcDamper"):
+        fittings.append(item)
+
+    for fitting in fittings:
+        name = fitting.Name
+        if fitting.PredefinedType == "BEND":
+            name = name + " " + ifcopenshell.util.element.get_pset(fitting, "FI_Geometria", prop="Kulma")
+        size = ifcopenshell.util.element.get_pset(fitting, "FI_Geometria", prop="Liitoskoko (DU)")
+
+        if name in parts:
+            if size in parts[name]:
+                parts[name][size] += 1
+            else:
+                parts[name].update({size : 1})
+        else:
+            parts.update({name : {size : 1}})
+    
+    return parts
+
 def ui():
     """
     Simple ui for testing of functions during development.
@@ -92,8 +129,8 @@ def ui():
     if model == None:
         print("Mallia ei ole avattu, lopetetaan sovellus.")
         return
+    print("Komennot: 1 = näytä putkien pituudet, 2 = näytä kanavien pituudet, 3 = kanavaosat q = lopeta")
     
-    print("Komennot: 1 = näytä putkien pituudet, 2 = näytä kanavien pituudet, q = lopeta")
     while True:
         cmd = input("Komento: ")
 
@@ -112,10 +149,16 @@ def ui():
                     print(type)
                     for size in ductQty[type]:
                         print("- koko", size, "mm {:.2f}".format(ductQty[type][size]), "m")
+            case "3":
+                ductParts = numOfDuctParts(model)
+
+                for part in ductParts:
+                    print(part)
+                    for size in ductParts[part]:
+                        print("- koko", size, ductParts[part][size], "kpl")
             case "q":
                 return
             case _:
                 print("Määrittelemätön komento")
-    
 
 ui()
