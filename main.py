@@ -62,13 +62,22 @@ def ui():
         print("Mallia ei ole avattu, lopetetaan sovellus.")
         return
     
-    pipeQty = pipe_meters(model)
+    print("Komennot: 1 = täytä putkien pituudet, q = lopeta")
+    while True:
+        cmd = input("Komento: ")
 
-    for type in pipeQty:
-        print(type)
-        for DN in pipeQty[type]:
-            print("- DN" , DN, "{:.2f}".format(pipeQty[type][DN]), "m.")
+        match cmd:
+            case "1":   
+                pipeQty = pipe_meters(model)
 
+                for type in pipeQty:
+                    print(type)
+                    for DN in pipeQty[type]:
+                        print("- DN" , DN, "{:.2f}".format(pipeQty[type][DN]), "m.")
+            case "q":
+                return
+            case _:
+                print("Määrittelemätön komento")
     
 
 ui()
