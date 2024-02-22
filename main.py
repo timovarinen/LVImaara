@@ -120,6 +120,43 @@ def numOfDuctParts(model):
     
     return parts
 
+def numOfPipeParts(model):
+    """
+    Read and count number of different pipe parts
+    
+    Parameters:
+        model: model to be read
+        
+    Returns:
+        dict: quantity of parts as {type (bends with angle) : {size : qty}}
+    """
+    parts = {}
+    fittings = model.by_type("IfcPipeFitting")
+    for item in model.by_type("IfcWasteTerminal"):
+        fittings.append(item)
+    for item in model.by_type("IfcSanitaryTerminal"):
+        fittings.append(item)
+    for item in model.by_type("IfcPump"):
+        fittings.append(item)
+    for item in model.by_type("IfcValve"):
+        fittings.append(item)
+
+    for fitting in fittings:
+        name = fitting.Name
+        if fitting.PredefinedType == "BEND":
+            name = name + " " + ifcopenshell.util.element.get_pset(fitting, "FI_Geometria", prop="Kulma")
+        size = ifcopenshell.util.element.get_pset(fitting, "FI_Geometria", prop="Liitoskoko (DN)")
+
+        if name in parts:
+            if size in parts[name]:
+                parts[name][size] += 1
+            else:
+                parts[name].update({size : 1})
+        else:
+            parts.update({name : {size : 1}})
+    
+    return parts
+
 def ui():
     """
     Simple ui for testing of functions during development.
@@ -156,6 +193,16 @@ def ui():
                     print(part)
                     for size in ductParts[part]:
                         print("- koko", size, ductParts[part][size], "kpl")
+            case "4":
+                pipeParts = numOfPipeParts(model)
+
+                for part in pipeParts:
+                    print(part)
+                    for size in pipeParts[part]:
+                        if size != None:
+                            print("- koko", size, pipeParts[part][size], "kpl")
+                        else:
+                            print(pipeParts[part][size], "kpl")
             case "q":
                 return
             case _:
