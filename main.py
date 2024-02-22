@@ -52,6 +52,37 @@ def pipe_meters(model):
 
     return qty
 
+def duct_meters(model):
+    """
+    Read and count duct meters form model
+
+    Parameters:
+        model: model to be read
+
+    Returns:
+        dict: quantity of ducts as {type : {diameter : qty}}
+    """
+
+    ducts = model.by_type("IfcDuctSegment")
+    qty = {}
+
+    for duct in ducts:
+        
+        name = duct.Name
+        size = ifcopenshell.util.element.get_pset(duct, "FI_Geometria", prop="Koko (DU)")
+        length = ifcopenshell.util.element.get_pset(duct, "FI_Geometria", prop="Pituus") / 1000
+
+        if name in qty:
+            if size in qty[name]:
+                newLength = length + qty[name][size]
+                qty[name].update({size : newLength})
+            else:
+                qty[name].update({size : length})
+        else:
+            qty.update({name : {size : length}})
+
+    return qty
+
 def ui():
     """
     Simple ui for testing of functions during development.
@@ -62,7 +93,7 @@ def ui():
         print("Mallia ei ole avattu, lopetetaan sovellus.")
         return
     
-    print("Komennot: 1 = täytä putkien pituudet, q = lopeta")
+    print("Komennot: 1 = näytä putkien pituudet, 2 = näytä kanavien pituudet, q = lopeta")
     while True:
         cmd = input("Komento: ")
 
@@ -73,7 +104,14 @@ def ui():
                 for type in pipeQty:
                     print(type)
                     for DN in pipeQty[type]:
-                        print("- DN" , DN, "{:.2f}".format(pipeQty[type][DN]), "m.")
+                        print("- DN", DN, "{:.2f}".format(pipeQty[type][DN]), "m")
+            case "2":   
+                ductQty = duct_meters(model)
+
+                for type in ductQty:
+                    print(type)
+                    for size in ductQty[type]:
+                        print("- koko", size, "mm {:.2f}".format(ductQty[type][size]), "m")
             case "q":
                 return
             case _:
