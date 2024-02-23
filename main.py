@@ -1,5 +1,6 @@
 import ifcopenshell
 import ifcopenshell.util.element
+import csv
 
 
 def read_file():
@@ -157,55 +158,38 @@ def numOfPipeParts(model):
     
     return parts
 
-def ui():
-    """
-    Simple ui for testing of functions during development.
-    """
+def csvWriter():
     print("LVI-määrälaskenta IFC-mallista, dev.")
     model = read_file()
     if model == None:
         print("Mallia ei ole avattu, lopetetaan sovellus.")
         return
-    print("Komennot: 1 = näytä putkien pituudet, 2 = näytä kanavien pituudet, 3 = kanavaosat q = lopeta")
     
-    while True:
-        cmd = input("Komento: ")
+    pipeQty = pipe_meters(model)
+    ductQty = duct_meters(model)
+    ductParts = numOfDuctParts(model)
+    pipeParts = numOfPipeParts(model)
 
-        match cmd:
-            case "1":   
-                pipeQty = pipe_meters(model)
+    with open("quantities.csv", "w", newline="") as csvFile:
+        writer = csv.writer(csvFile, delimiter=";")
+        writer.writerow(["Tyyppi", "Koko", "Määrä", "Yks."])
+        for type in pipeQty:
+            for DN in pipeQty[type]:
+                writer.writerow([type, DN, "{:.2f}".format(pipeQty[type][DN]), "m"])
 
-                for type in pipeQty:
-                    print(type)
-                    for DN in pipeQty[type]:
-                        print("- DN", DN, "{:.2f}".format(pipeQty[type][DN]), "m")
-            case "2":   
-                ductQty = duct_meters(model)
+        for type in ductQty:
+            for size in ductQty[type]:
+                writer.writerow([type, size, "{:.2f}".format(ductQty[type][size]), "m"])
 
-                for type in ductQty:
-                    print(type)
-                    for size in ductQty[type]:
-                        print("- koko", size, "mm {:.2f}".format(ductQty[type][size]), "m")
-            case "3":
-                ductParts = numOfDuctParts(model)
+        
+        for part in ductParts:
+            for size in ductParts[part]:
+                writer.writerow([part, size, ductParts[part][size], "kpl"])
 
-                for part in ductParts:
-                    print(part)
-                    for size in ductParts[part]:
-                        print("- koko", size, ductParts[part][size], "kpl")
-            case "4":
-                pipeParts = numOfPipeParts(model)
-
-                for part in pipeParts:
-                    print(part)
-                    for size in pipeParts[part]:
-                        if size != None:
-                            print("- koko", size, pipeParts[part][size], "kpl")
-                        else:
-                            print(pipeParts[part][size], "kpl")
-            case "q":
-                return
-            case _:
-                print("Määrittelemätön komento")
-
-ui()
+        for part in pipeParts:
+            for size in pipeParts[part]:
+                if size != None:
+                    writer.writerow([part, size, pipeParts[part][size], "kpl"])
+                else:
+                    writer.writerow([part, "", pipeParts[part][size], "kpl"])
+csvWriter()
