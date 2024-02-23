@@ -170,7 +170,10 @@ def csvWriter():
     ductParts = numOfDuctParts(model)
     pipeParts = numOfPipeParts(model)
 
-    with open("quantities.csv", "w", newline="") as csvFile:
+    print("Syötä polku, johon haluat tulostiedoston tallennettavan. Esimerkiksi c:\polku\kansioon ")
+    pathToFile = input(": ") + "\LVImaarat.csv"
+
+    with open(pathToFile, "w", newline="") as csvFile:
         writer = csv.writer(csvFile, delimiter=";")
         writer.writerow(["Tyyppi", "Koko", "Määrä", "Yks."])
         for type in pipeQty:
